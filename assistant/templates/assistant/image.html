@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Image Caption / Classifier</title>
+</head>
+<body>
+<h1>Image Caption & Classification</h1>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    <label for="image">Upload image:</label><br>
+    <input type="file" id="image" name="image"><br><br>
+
+    <button type="submit" name="mode" value="caption">Get Caption</button>
+    <button type="submit" name="mode" value="classify">Classify Image</button>
+</form>
+
+<hr>
+
+{% if error %}
+    <h2>Error</h2>
+    <pre style="color: red;">{{ error }}</pre>
+{% endif %}
+
+{% if caption %}
+    <h2>Caption</h2>
+    <p>{{ caption }}</p>
+{% endif %}
+
+{% if label %}
+    <h2>Predicted Label</h2>
+    <p>{{ label }}</p>
+{% endif %}
+
+{% if image_url %}
+    <h3>Uploaded Image</h3>
+    <img src="{{ image_url }}" alt="Uploaded image" style="max-width: 400px;">
+{% endif %}
+
+<p><a href="/assistant/">Back to home</a></p>
+</body>
+</html>

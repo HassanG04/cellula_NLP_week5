@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>LSTM Text Classifier</title>
+</head>
+<body>
+<h1>LSTM Text Classifier</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="text">Input text:</label><br>
+    <textarea id="text" name="text" rows="4" cols="80">{{ text }}</textarea><br><br>
+    <button type="submit">Classify</button>
+</form>
+
+<hr>
+
+{% if error %}
+    <h2>Error</h2>
+    <pre style="color: red;">{{ error }}</pre>
+{% endif %}
+
+{% if predicted_label %}
+    <h2>Predicted Label</h2>
+    <p><strong>{{ predicted_label }}</strong></p>
+{% endif %}
+
+{% if predicted_index is not None %}
+    <p>(index: {{ predicted_index }})</p>
+{% endif %}
+
+<p><a href="/assistant/">Back to home</a></p>
+</body>
+</html>

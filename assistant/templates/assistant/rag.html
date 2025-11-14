@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>RAG Q&A</title>
+</head>
+<body>
+<h1>RAG Question Answering</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="question">Ask a question about your documents:</label><br>
+    <textarea id="question" name="question" rows="4" cols="80">{{ question }}</textarea><br><br>
+    <button type="submit">Ask</button>
+</form>
+
+<hr>
+
+{% if error %}
+    <h2>Error</h2>
+    <pre style="color: red;">{{ error }}</pre>
+{% endif %}
+
+{% if answer %}
+    <h2>Answer</h2>
+    <pre>{{ answer }}</pre>
+{% endif %}
+
+{% if context %}
+    <h3>Retrieved Context</h3>
+    <pre>{{ context }}</pre>
+{% endif %}
+
+<p><a href="/assistant/">Back to home</a></p>
+</body>
+</html>

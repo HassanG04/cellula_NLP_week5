@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Code Assistant</title>
+</head>
+<body>
+<h1>Code Assistant (LangGraph)</h1>
+
+<form method="post">
+    {% csrf_token %}
+    <label for="user_input">Your request (generate or explain Python code):</label><br>
+    <textarea id="user_input" name="user_input" rows="8" cols="80">{{ user_input }}</textarea><br><br>
+    <button type="submit">Run assistant</button>
+</form>
+
+<hr>
+
+{% if error %}
+    <h2>Error</h2>
+    <pre style="color: red;">{{ error }}</pre>
+{% endif %}
+
+{% if result %}
+    <h2>Result</h2>
+    <pre>{{ result }}</pre>
+{% endif %}
+
+<p><a href="/assistant/">Back to home</a></p>
+</body>
+</html>
