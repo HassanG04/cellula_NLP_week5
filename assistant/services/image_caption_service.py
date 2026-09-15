@@ -1,16 +1,22 @@
-from transformers import BlipProcessor, BlipForConditionalGeneration
-from PIL import Image
-import torch
+from functools import lru_cache
 
-# Load model once (important for performance)
-BLIP_MODEL_NAME = "Salesforce/blip-image-captioning-base"
-processor = BlipProcessor.from_pretrained(BLIP_MODEL_NAME)
-model = BlipForConditionalGeneration.from_pretrained(BLIP_MODEL_NAME)
 
-def generate_caption(image_path: str) -> str:
-    raw_image = Image.open(image_path).convert("RGB")
-    inputs = processor(raw_image, return_tensors="pt")
+@lru_cache
+def _load_captioner():
+    from transformers import BlipForConditionalGeneration, BlipProcessor
+
+    name = "Salesforce/blip-image-captioning-base"
+    return BlipProcessor.from_pretrained(name), BlipForConditionalGeneration.from_pretrained(name)
+
+
+def generate_caption(image_path):
+    import torch
+    from PIL import Image
+
+    processor, model = _load_captioner()
+    with Image.open(image_path) as image:
+        inputs = processor(image.convert("RGB"), return_tensors="pt")
+    model.eval()
     with torch.no_grad():
-        out = model.generate(**inputs)
-    caption = processor.decode(out[0], skip_special_tokens=True)
-    return caption
+        output = model.generate(**inputs, max_new_tokens=50)
+    return processor.decode(output[0], skip_special_tokens=True)

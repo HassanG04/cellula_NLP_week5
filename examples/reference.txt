@@ -1,0 +1,4 @@
+This demonstration assistant has four independent capabilities: Python generation or explanation,
+document-grounded question answering, LSTM text classification, and BLIP image captioning.
+The text classifier requires a trained lstm_text_classifier.h5 file, the matching tokenizer,
+and the label encoder. Image captioning does not require the classifier when caption mode is selected.

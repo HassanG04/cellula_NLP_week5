@@ -24,6 +24,8 @@
 {% if predicted_label %}
     <h2>Predicted Label</h2>
     <p><strong>{{ predicted_label }}</strong></p>
+    <p>Model: {{ model_version }} · Inference: {{ latency_ms }} ms</p>
+    <p>Educational demonstration only. The recovered model has known false positives and is not suitable for moderation decisions.</p>
 {% endif %}
 
 {% if predicted_index is not None %}

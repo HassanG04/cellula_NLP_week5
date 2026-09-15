@@ -1,0 +1,9 @@
+{
+  "source": "Recovered from Quantization_Cellula_Week_2/code.rar; tokenizer and label encoder matched byte-for-byte",
+  "max_length": 100,
+  "padding": "pre",
+  "truncating": "pre",
+  "num_classes": 9,
+  "legacy_model_sha256": "5c4c5218e5b7f8aebb3f7b11ce0653357cb4b15eb1f3fdb76ad35ee2656b4af7",
+  "converted_with_tensorflow": "2.21.0"
+}

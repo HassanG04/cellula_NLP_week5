@@ -1,58 +1,61 @@
-# assistant/services/lstm_service.py
-import pickle
+from __future__ import annotations
+
+import hashlib
+import json
+import time
 from pathlib import Path
 
-import tensorflow as tf
-from tensorflow.keras.preprocessing.sequence import pad_sequences
-
-# Project root (.. / .. / .. from this file)
-BASE_DIR = Path(__file__).resolve().parent.parent.parent
-
-MODEL_PATH = BASE_DIR / "lstm_text_classifier.h5"
-TOKENIZER_PATH = BASE_DIR / "lstm_tokenizer.pkl"
-MAX_LEN = 100
-
-# Lazy globals (loaded only when needed)
+BASE_DIR = Path(__file__).resolve().parents[2]
+MODEL_PATH = BASE_DIR / "models/toxic_lstm.keras"
+TOKENIZER_PATH = BASE_DIR / "models/tokenizer.json"
 _model = None
 _tokenizer = None
+_version = "unloaded"
 
 
 def _load_model_and_tokenizer():
-    """Load the LSTM model and tokenizer lazily, with clear error messages."""
-    global _model, _tokenizer
-
-    if _model is not None and _tokenizer is not None:
+    global _model, _tokenizer, _version
+    if _model is not None:
         return _model, _tokenizer
+    if not MODEL_PATH.exists() or not TOKENIZER_PATH.exists():
+        raise RuntimeError("Classifier model or tokenizer is missing")
+    import tensorflow as tf
+    from tensorflow.keras.preprocessing.text import tokenizer_from_json
 
-    if not MODEL_PATH.exists():
-        raise RuntimeError(
-            f"LSTM model file not found: {MODEL_PATH}\n"
-            "Put your trained 'lstm_text_classifier.h5' in the project root "
-            "(same folder as manage.py) or update MODEL_PATH."
-        )
-
-    if not TOKENIZER_PATH.exists():
-        raise RuntimeError(
-            f"Tokenizer file not found: {TOKENIZER_PATH}\n"
-            "Put your 'lstm_tokenizer.pkl' in the project root "
-            "(same folder as manage.py) or update TOKENIZER_PATH."
-        )
-
-    _model = tf.keras.models.load_model(MODEL_PATH)
-    with open(TOKENIZER_PATH, "rb") as f:
-        _tokenizer = pickle.load(f)
-
+    _model = tf.keras.models.load_model(MODEL_PATH, compile=False)
+    _tokenizer = tokenizer_from_json(TOKENIZER_PATH.read_text(encoding="utf-8"))
+    _version = "lstm-" + hashlib.sha256(MODEL_PATH.read_bytes()).hexdigest()[:12]
     return _model, _tokenizer
 
 
-def lstm_classify(text: str) -> int:
-    """
-    Classify a text using the LSTM model.
-    Returns the predicted class index as an int.
-    """
+def classify_with_metadata(text):
+    if not isinstance(text, str) or not text.strip() or len(text) > 10000:
+        raise ValueError("text must contain 1 to 10000 characters")
     model, tokenizer = _load_model_and_tokenizer()
+    import numpy as np
+    from tensorflow.keras.preprocessing.sequence import pad_sequences
 
-    seq = tokenizer.texts_to_sequences([text])
-    padded = pad_sequences(seq, maxlen=MAX_LEN)
-    preds = model.predict(padded)
-    return int(preds.argmax(axis=1)[0])
+    padded = pad_sequences(
+        tokenizer.texts_to_sequences([text]), maxlen=100, padding="pre", truncating="pre"
+    )
+    started = time.perf_counter()
+    probabilities = model(padded, training=False).numpy()[0]
+    labels = json.loads((BASE_DIR / "models/labels.json").read_text(encoding="utf-8"))
+    if (
+        len(probabilities) != len(labels)
+        or not np.isfinite(probabilities).all()
+        or not np.isclose(probabilities.sum(), 1, atol=1e-5)
+    ):
+        raise RuntimeError("Invalid classifier probability schema")
+    index = int(probabilities.argmax())
+    return {
+        "predicted_index": index,
+        "predicted_label": labels[index],
+        "probabilities": probabilities.tolist(),
+        "model_version": _version,
+        "latency_ms": round((time.perf_counter() - started) * 1000, 3),
+    }
+
+
+def lstm_classify(text):
+    return classify_with_metadata(text)["predicted_index"]
